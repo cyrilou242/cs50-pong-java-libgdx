@@ -23,24 +23,20 @@ public class Main extends ApplicationAdapter {
     public static final int WORLD_WIDTH = 432;
     public static final int WORLD_HEIGHT = 243;
     public static final int PADDLE_SPEED = 200;
-    private static final int PADDLE_HEIGHT = 20;
 
     private SpriteBatch batch;
     private BitmapFont smallFont;
     private BitmapFont scoreFont;
     private FitViewport viewport;
-    private ShapeRenderer shape;
+    public ShapeRenderer shape;
     private int player1Score;
     private int player2Score;
-    private float player1Y;
-    private float player2Y;
-    private float ballX;
-    private float ballY;
-    private int ballDx;
-    private int ballDy;
 
-    private Random randomGen;
+    public Random randomGen;
     private GameState gameState;
+    private Ball ball;
+    private Paddle player1;
+    private Paddle player2;
 
     private enum GameState {
         START,
@@ -75,19 +71,12 @@ public class Main extends ApplicationAdapter {
 
         player1Score = 0;
         player2Score = 0;
-        player1Y = WORLD_HEIGHT - 30 - 20;
-        player2Y = 30;
+        player1 = new Paddle(this,10,  WORLD_HEIGHT - 30 - 20);
+        player2 = new Paddle(this,WORLD_WIDTH - 10 - Paddle.WIDTH,  30);
 
-        initBall();
+        ball = new Ball(this, 4, 4);
 
         gameState  = GameState.START;
-    }
-
-    private void initBall() {
-        ballX = WORLD_WIDTH / 2 - 2;
-        ballY = WORLD_HEIGHT / 2 - 2;
-        ballDx = randomGen.nextBoolean() ? 100 : -100;
-        ballDy = randomGen.nextInt(0, 101) - 50;
     }
 
     @Override
@@ -99,26 +88,26 @@ public class Main extends ApplicationAdapter {
 
     private void input() {
         if (gameState == GameState.PLAY) {
-            ballX += ballDx * Gdx.graphics.getDeltaTime();
-            ballY += ballDy * Gdx.graphics.getDeltaTime();
+            ball.update();
         }
-
         if (Gdx.input.isKeyPressed(Keys.DOWN)) {
-            player2Y -= PADDLE_SPEED * Gdx.graphics.getDeltaTime();
-            player2Y = Math.max(0, player2Y);
+            player2.dy = -PADDLE_SPEED;
         } else if (Gdx.input.isKeyPressed(Keys.UP)) {
-            player2Y += PADDLE_SPEED * Gdx.graphics.getDeltaTime();
-            player2Y = Math.min( WORLD_HEIGHT - PADDLE_HEIGHT, player2Y);
+            player2.dy = PADDLE_SPEED;
+        } else {
+            player2.dy = 0;
         }
 
         if (Gdx.input.isKeyPressed(Keys.S)) {
-            player1Y -= PADDLE_SPEED * Gdx.graphics.getDeltaTime();
-            player1Y = Math.max(0, player1Y);
+            player1.dy = -PADDLE_SPEED;
         } else if (Gdx.input.isKeyPressed(Keys.Z) || Gdx.input.isKeyPressed(Keys.W)) {
             // Z or W to be compatible with both AZERTY and QWERTY in a simple way
-            player1Y += PADDLE_SPEED * Gdx.graphics.getDeltaTime();
-            player1Y = Math.min( WORLD_HEIGHT - PADDLE_HEIGHT, player1Y);
+            player1.dy = PADDLE_SPEED;
+        } else {
+          player1.dy = 0;
         }
+        player1.update(Gdx.graphics.getDeltaTime());
+        player2.update(Gdx.graphics.getDeltaTime());
 
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
             Gdx.app.exit();
@@ -127,7 +116,7 @@ public class Main extends ApplicationAdapter {
                 gameState = GameState.PLAY;
             } else {
                 gameState = GameState.START;
-                initBall();
+                ball.reset();
             }
         }
     }
@@ -144,17 +133,18 @@ public class Main extends ApplicationAdapter {
         // glyph layout is used to center - we can get its width
         final GlyphLayout layout = new GlyphLayout(smallFont, "Hello " + gameState + " state!");
         smallFont.draw(batch, layout, (WORLD_WIDTH - layout.width) / 2, WORLD_HEIGHT - 20);
-        scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
-        scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        // remove scores display for the moment
+        //scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        //scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
         batch.end();
 
         // the rectangles
         shape.setProjectionMatrix(viewport.getCamera().combined);
         shape.begin(ShapeType.Filled);
         shape.setColor(Color.WHITE);
-        shape.rect(10, player1Y, 5, PADDLE_HEIGHT);
-        shape.rect(WORLD_WIDTH - 10 - 5, player2Y, 5, PADDLE_HEIGHT);
-        shape.rect(ballX, ballY, 4, 4);
+        player1.draw();
+        player2.draw();
+        ball.draw();
 
         shape.end();
     }
