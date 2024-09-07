@@ -54,7 +54,6 @@ public class Main extends ApplicationAdapter {
         parameter.size = 8;
         smallFont = generator.generateFont(parameter);
         smallFont.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        smallFont.setColor(Color.WHITE);
 
         parameter.size = 32;
         scoreFont = generator.generateFont(parameter);
@@ -128,15 +127,6 @@ public class Main extends ApplicationAdapter {
     private void draw() {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         viewport.apply();
-        batch.setProjectionMatrix(viewport.getCamera().combined);
-        batch.begin();
-        // glyph layout is used to center - we can get its width
-        final GlyphLayout layout = new GlyphLayout(smallFont, "Hello " + gameState + " state!");
-        smallFont.draw(batch, layout, (WORLD_WIDTH - layout.width) / 2, WORLD_HEIGHT - 20);
-        // remove scores display for the moment
-        //scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
-        //scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
-        batch.end();
 
         // the rectangles
         shape.setProjectionMatrix(viewport.getCamera().combined);
@@ -145,8 +135,22 @@ public class Main extends ApplicationAdapter {
         player1.draw();
         player2.draw();
         ball.draw();
-
         shape.end();
+
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
+        // glyph layout is used to center - we can get its width
+        smallFont.setColor(Color.WHITE);
+        final GlyphLayout layout = new GlyphLayout(smallFont, "Hello " + gameState + " state!");
+        smallFont.draw(batch, layout, (WORLD_WIDTH - layout.width) / 2, WORLD_HEIGHT - 20);
+
+        smallFont.setColor(Color.GREEN);
+        final GlyphLayout fpsLayout = new GlyphLayout(smallFont, "FPS: " + Gdx.graphics.getFramesPerSecond());
+        smallFont.draw(batch, fpsLayout, 10, WORLD_HEIGHT - 10);
+        // remove scores display for the moment
+        //scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        //scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        batch.end();
     }
 
     @Override
