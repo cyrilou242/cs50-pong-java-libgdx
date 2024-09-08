@@ -1,6 +1,6 @@
 # cs50-pong-java-libgdx
 
-Implementation of pong from [Harvard CS50](https://cs50.harvard.edu/games/2018/weeks/0/).  
+Implementation of pong from [Harvard CS50 Games](https://cs50.harvard.edu/games/2018/weeks/0/).  
 The commits correspond to the [steps](https://cs50.harvard.edu/games/2018/notes/0/) pong-0, pong-1, pong-2, etc... so you can look at a single commit 
 to easily see the changes for one particular step. 
 
