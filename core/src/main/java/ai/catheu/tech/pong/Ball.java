@@ -5,12 +5,12 @@ import com.badlogic.gdx.Gdx;
 public class Ball {
 
     private final Main game;
-    private float x;
-    private float y;
-    private final int width;
-    private final int height;
-    private float dx;
-    private float dy;
+    public float x;
+    public float y;
+    public final int width;
+    public final int height;
+    public float dx;
+    public float dy;
 
     public Ball(final Main game, final int width, final int height) {
         this.game = game;
@@ -18,6 +18,18 @@ public class Ball {
         this.height = height;
 
         reset();
+    }
+
+    public boolean collides(final Paddle paddle) {
+        if (x > paddle.x + Paddle.WIDTH || paddle.x > x + width) {
+            return false;
+        }
+
+        if (y > paddle.y + Paddle.HEIGHT || paddle.y > y + height) {
+            return false;
+        }
+
+        return true;
     }
 
     public void reset() {

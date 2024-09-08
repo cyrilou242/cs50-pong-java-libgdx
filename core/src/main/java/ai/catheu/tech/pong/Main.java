@@ -81,11 +81,43 @@ public class Main extends ApplicationAdapter {
     @Override
     public void render() {
         input();
-        logic();
         draw();
     }
 
     private void input() {
+        if (gameState == GameState.PLAY) {
+            // detect ball collision with paddles, reversing dx if true and
+            // slightly increasing it, then altering the dy based on the position of collision
+            if (ball.collides(player1)) {
+                ball.dx = -ball.dx * 1.03f;
+                ball.x = player1.x + Paddle.WIDTH;
+                if (ball.dy < 0) {
+                    ball.dy = -randomGen.nextInt(10, 151);
+                } else {
+                    ball.dy = randomGen.nextInt(10, 151);
+                }
+            }
+            if (ball.collides(player2)) {
+                ball.dx = -ball.dx * 1.03f;
+                ball.x = player2.x - ball.width;
+                if (ball.dy < 0) {
+                    ball.dy = -randomGen.nextInt(10, 151);
+                } else {
+                    ball.dy = randomGen.nextInt(10, 151);
+                }
+            }
+
+            if (ball.y <= 0) {
+                ball.y = 0;
+                ball.dy = -ball.dy;
+            }
+            if (ball.y >= WORLD_HEIGHT - ball.height) {
+                ball.y = WORLD_HEIGHT - ball.height;
+                ball.dy = -ball.dy;
+            }
+        }
+
+
         if (gameState == GameState.PLAY) {
             ball.update();
         }
@@ -120,10 +152,6 @@ public class Main extends ApplicationAdapter {
         }
     }
 
-    private void logic() {
-
-    }
-
     private void draw() {
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         viewport.apply();
@@ -147,9 +175,8 @@ public class Main extends ApplicationAdapter {
         smallFont.setColor(Color.GREEN);
         final GlyphLayout fpsLayout = new GlyphLayout(smallFont, "FPS: " + Gdx.graphics.getFramesPerSecond());
         smallFont.draw(batch, fpsLayout, 10, WORLD_HEIGHT - 10);
-        // remove scores display for the moment
-        //scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
-        //scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        scoreFont.draw(batch, String.valueOf(player1Score), WORLD_WIDTH / 2 - 50, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
+        scoreFont.draw(batch, String.valueOf(player2Score), WORLD_WIDTH / 2 + 30, WORLD_HEIGHT - (WORLD_HEIGHT / 3));
         batch.end();
     }
 
