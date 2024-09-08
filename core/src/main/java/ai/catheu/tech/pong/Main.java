@@ -41,7 +41,8 @@ public class Main extends ApplicationAdapter {
 
     private enum GameState {
         START,
-        PLAY
+        PLAY,
+        SERVE
     }
 
     @Override
@@ -86,7 +87,14 @@ public class Main extends ApplicationAdapter {
     }
 
     private void input() {
-        if (gameState == GameState.PLAY) {
+        if (gameState == GameState.SERVE) {
+            ball.dy = randomGen.nextInt(0, 101) - 50;
+            if (servingPlayer == 1) {
+                ball.dx = randomGen.nextInt(140, 200) ;
+            } else {
+                ball.dx = -randomGen.nextInt(140, 200);
+            }
+        } else if (gameState == GameState.PLAY) {
             // detect ball collision with paddles, reversing dx if true and
             // slightly increasing it, then altering the dy based on the position of collision
             if (ball.collides(player1)) {
@@ -122,12 +130,12 @@ public class Main extends ApplicationAdapter {
             servingPlayer = 1;
             player2Score++;
             ball.reset();
-            gameState = GameState.START;
+            gameState = GameState.SERVE;
         } else if (ball.x >= WORLD_WIDTH - ball.width) {
             servingPlayer = 2;
             player1Score++;
             ball.reset();
-            gameState = GameState.START;
+            gameState = GameState.SERVE;
         }
 
 
@@ -157,10 +165,9 @@ public class Main extends ApplicationAdapter {
             Gdx.app.exit();
         } else if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.BACKSPACE)) {
             if (gameState == GameState.START) {
+                gameState = GameState.SERVE;
+            } else if (gameState == GameState.SERVE) {
                 gameState = GameState.PLAY;
-            } else {
-                gameState = GameState.START;
-                ball.reset();
             }
         }
     }
@@ -182,8 +189,19 @@ public class Main extends ApplicationAdapter {
         batch.begin();
         // glyph layout is used to center - we can get its width
         smallFont.setColor(Color.WHITE);
-        final GlyphLayout layout = new GlyphLayout(smallFont, "Hello " + gameState + " state!");
-        smallFont.draw(batch, layout, (WORLD_WIDTH - layout.width) / 2, WORLD_HEIGHT - 20);
+        if (gameState == GameState.START) {
+            final GlyphLayout welcomeLayout = new GlyphLayout(smallFont, "Welcome to Pong!");
+            smallFont.draw(batch, welcomeLayout, (WORLD_WIDTH - welcomeLayout.width) / 2, WORLD_HEIGHT - 10);
+            final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to begin!");
+            smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 20);
+        } else if (gameState == GameState.SERVE) {
+            final GlyphLayout playerTurnLayout = new GlyphLayout(smallFont, "Player " + servingPlayer + "'s serve!");
+            smallFont.draw(batch, playerTurnLayout, (WORLD_WIDTH - playerTurnLayout.width) / 2, WORLD_HEIGHT - 10);
+            final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to serve!");
+            smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 20);
+        } else if (gameState == GameState.PLAY) {
+            // no UI messages to display
+        }
 
         smallFont.setColor(Color.GREEN);
         final GlyphLayout fpsLayout = new GlyphLayout(smallFont, "FPS: " + Gdx.graphics.getFramesPerSecond());
