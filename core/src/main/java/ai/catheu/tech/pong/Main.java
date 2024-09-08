@@ -37,6 +37,7 @@ public class Main extends ApplicationAdapter {
     private Ball ball;
     private Paddle player1;
     private Paddle player2;
+    private int servingPlayer;
 
     private enum GameState {
         START,
@@ -115,6 +116,18 @@ public class Main extends ApplicationAdapter {
                 ball.y = WORLD_HEIGHT - ball.height;
                 ball.dy = -ball.dy;
             }
+        }
+
+        if (ball.x < 0) {
+            servingPlayer = 1;
+            player2Score++;
+            ball.reset();
+            gameState = GameState.START;
+        } else if (ball.x >= WORLD_WIDTH - ball.width) {
+            servingPlayer = 2;
+            player1Score++;
+            ball.reset();
+            gameState = GameState.START;
         }
 
 
