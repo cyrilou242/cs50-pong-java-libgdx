@@ -46,6 +46,8 @@ public class Main extends ApplicationAdapter {
     private Sound scoreSound;
     private Sound wallHitSound;
 
+    private boolean player2IsAi;
+
     private enum GameState {
         START,
         PLAY,
@@ -93,8 +95,10 @@ public class Main extends ApplicationAdapter {
 
         ball = new Ball(this, 4, 4);
 
-        gameState  = GameState.START;
+            gameState  = GameState.START;
         servingPlayer = randomGen.nextInt(1, 3);
+
+        player2IsAi = false;
     }
 
     @Override
@@ -177,12 +181,30 @@ public class Main extends ApplicationAdapter {
         if (gameState == GameState.PLAY) {
             ball.update();
         }
-        if (Gdx.input.isKeyPressed(Keys.DOWN)) {
-            player2.dy = -PADDLE_SPEED;
-        } else if (Gdx.input.isKeyPressed(Keys.UP)) {
-            player2.dy = PADDLE_SPEED;
+
+        if (!player2IsAi) {
+            // take human player inputs
+            if (Gdx.input.isKeyPressed(Keys.DOWN)) {
+                player2.dy = -PADDLE_SPEED;
+            } else if (Gdx.input.isKeyPressed(Keys.UP)) {
+                player2.dy = PADDLE_SPEED;
+            } else {
+                player2.dy = 0;
+            }
         } else {
-            player2.dy = 0;
+            // AI decides how to move - very simple logic
+            if (ball.dx <= 0 ) {
+                // let's say the AI does not update when the ball is going to player1 - this gives some chance to player1 to win
+                player2.dy = 0;
+            } else {
+                if (ball.y > player2.y + player2.HEIGHT * 3./4.) {
+                    player2.dy = PADDLE_SPEED;
+                } else if (ball.y < player2.y + player2.HEIGHT * 1./4.) {
+                    player2.dy = -PADDLE_SPEED;
+                } else {
+                    player2.dy = 0;
+                }
+            }
         }
 
         if (Gdx.input.isKeyPressed(Keys.S)) {
@@ -216,6 +238,9 @@ public class Main extends ApplicationAdapter {
 
             }
         }
+        if ((gameState == GameState.START || gameState == GameState.SERVE) && Gdx.input.isKeyJustPressed(Keys.D)) {
+                player2IsAi = !player2IsAi;
+            }
     }
 
     private void draw() {
@@ -240,11 +265,15 @@ public class Main extends ApplicationAdapter {
             smallFont.draw(batch, welcomeLayout, (WORLD_WIDTH - welcomeLayout.width) / 2, WORLD_HEIGHT - 10);
             final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to begin!");
             smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 20);
+            final GlyphLayout pressAforAiLayout = new GlyphLayout(smallFont, "Player 2 AI " + (player2IsAi ? "enabled" : "disabled") + ". Press D to toggle AI.");
+            smallFont.draw(batch, pressAforAiLayout, (WORLD_WIDTH - pressAforAiLayout.width) / 2, WORLD_HEIGHT - 30);
         } else if (gameState == GameState.SERVE) {
             final GlyphLayout playerTurnLayout = new GlyphLayout(smallFont, "Player " + servingPlayer + "'s serve!");
             smallFont.draw(batch, playerTurnLayout, (WORLD_WIDTH - playerTurnLayout.width) / 2, WORLD_HEIGHT - 10);
             final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to serve!");
             smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 20);
+            final GlyphLayout pressAforAiLayout = new GlyphLayout(smallFont, "Player 2 AI " + (player2IsAi ? "enabled" : "disabled") + ". Press D to toggle AI.");
+            smallFont.draw(batch, pressAforAiLayout, (WORLD_WIDTH - pressAforAiLayout.width) / 2, WORLD_HEIGHT - 30);
         } else if (gameState == GameState.DONE) {
             final GlyphLayout playerWinsLayout = new GlyphLayout(largeFont, "Player " + winningPlayer + " wins!");
             largeFont.draw(batch, playerWinsLayout, (WORLD_WIDTH - playerWinsLayout.width) / 2, WORLD_HEIGHT - 10);
