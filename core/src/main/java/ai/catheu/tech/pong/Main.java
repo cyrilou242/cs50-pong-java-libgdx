@@ -3,6 +3,7 @@ package ai.catheu.tech.pong;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
@@ -23,9 +24,11 @@ public class Main extends ApplicationAdapter {
     public static final int WORLD_WIDTH = 432;
     public static final int WORLD_HEIGHT = 243;
     public static final int PADDLE_SPEED = 200;
+    private static final int WIN_SCORE = 2;
 
     private SpriteBatch batch;
     private BitmapFont smallFont;
+    private BitmapFont largeFont;
     private BitmapFont scoreFont;
     private FitViewport viewport;
     public ShapeRenderer shape;
@@ -38,11 +41,16 @@ public class Main extends ApplicationAdapter {
     private Paddle player1;
     private Paddle player2;
     private int servingPlayer;
+    private int winningPlayer;
+    private Sound paddleHitSound;
+    private Sound scoreSound;
+    private Sound wallHitSound;
 
     private enum GameState {
         START,
         PLAY,
-        SERVE
+        SERVE,
+        DONE
     }
 
     @Override
@@ -57,12 +65,20 @@ public class Main extends ApplicationAdapter {
         smallFont = generator.generateFont(parameter);
         smallFont.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
 
+        parameter.size = 16;
+        largeFont = generator.generateFont(parameter);
+        largeFont.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+
         parameter.size = 32;
         scoreFont = generator.generateFont(parameter);
         scoreFont.getRegion().getTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         scoreFont.setColor(Color.WHITE);
 
         generator.dispose(); // don't forget to dispose to avoid memory leaks!
+
+        paddleHitSound = Gdx.audio.newSound(Gdx.files.internal("paddle_hit.wav"));
+        scoreSound = Gdx.audio.newSound(Gdx.files.internal("score.wav"));
+        wallHitSound = Gdx.audio.newSound(Gdx.files.internal("wall_hit.wav"));
 
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT));
         viewport.getCamera().position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
@@ -78,6 +94,7 @@ public class Main extends ApplicationAdapter {
         ball = new Ball(this, 4, 4);
 
         gameState  = GameState.START;
+        servingPlayer = randomGen.nextInt(1, 3);
     }
 
     @Override
@@ -105,6 +122,7 @@ public class Main extends ApplicationAdapter {
                 } else {
                     ball.dy = randomGen.nextInt(10, 151);
                 }
+                paddleHitSound.play();
             }
             if (ball.collides(player2)) {
                 ball.dx = -ball.dx * 1.03f;
@@ -114,28 +132,45 @@ public class Main extends ApplicationAdapter {
                 } else {
                     ball.dy = randomGen.nextInt(10, 151);
                 }
+                paddleHitSound.play();
             }
 
             if (ball.y <= 0) {
                 ball.y = 0;
                 ball.dy = -ball.dy;
+                wallHitSound.play();
             }
             if (ball.y >= WORLD_HEIGHT - ball.height) {
                 ball.y = WORLD_HEIGHT - ball.height;
                 ball.dy = -ball.dy;
+                wallHitSound.play();
             }
         }
 
         if (ball.x < 0) {
             servingPlayer = 1;
             player2Score++;
-            ball.reset();
-            gameState = GameState.SERVE;
+            if (player2Score == WIN_SCORE) {
+                winningPlayer = 2;
+                gameState = GameState.DONE;
+                ball.reset();
+            } else {
+                ball.reset();
+                gameState = GameState.SERVE;
+            }
+            scoreSound.play();
         } else if (ball.x >= WORLD_WIDTH - ball.width) {
             servingPlayer = 2;
             player1Score++;
-            ball.reset();
-            gameState = GameState.SERVE;
+            if (player1Score == WIN_SCORE) {
+                winningPlayer = 1;
+                gameState = GameState.DONE;
+                ball.reset();
+            } else {
+                ball.reset();
+                gameState = GameState.SERVE;
+            }
+            scoreSound.play();
         }
 
 
@@ -168,6 +203,17 @@ public class Main extends ApplicationAdapter {
                 gameState = GameState.SERVE;
             } else if (gameState == GameState.SERVE) {
                 gameState = GameState.PLAY;
+            } else if (gameState == GameState.DONE) {
+                gameState = GameState.SERVE;
+                ball.reset();
+                player1Score = 0;
+                player2Score = 0;
+                if (winningPlayer == 1) {
+                    servingPlayer = 2;
+                } else {
+                    servingPlayer = 1;
+                }
+
             }
         }
     }
@@ -199,6 +245,11 @@ public class Main extends ApplicationAdapter {
             smallFont.draw(batch, playerTurnLayout, (WORLD_WIDTH - playerTurnLayout.width) / 2, WORLD_HEIGHT - 10);
             final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to serve!");
             smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 20);
+        } else if (gameState == GameState.DONE) {
+            final GlyphLayout playerWinsLayout = new GlyphLayout(largeFont, "Player " + winningPlayer + " wins!");
+            largeFont.draw(batch, playerWinsLayout, (WORLD_WIDTH - playerWinsLayout.width) / 2, WORLD_HEIGHT - 10);
+            final GlyphLayout pressEnterLayout = new GlyphLayout(smallFont, "Press enter to restart!");
+            smallFont.draw(batch, pressEnterLayout, (WORLD_WIDTH - pressEnterLayout.width) / 2, WORLD_HEIGHT - 30);
         } else if (gameState == GameState.PLAY) {
             // no UI messages to display
         }
@@ -215,6 +266,8 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         batch.dispose();
         smallFont.dispose();
+        largeFont.dispose();
+        scoreFont.dispose();
         shape.dispose();
     }
 
